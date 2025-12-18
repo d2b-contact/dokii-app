@@ -7,152 +7,185 @@ import os
 
 # Configuration de la page
 st.set_page_config(
-    page_title="DocVerify AI - Vérification Intelligente",
-    page_icon="🛡️",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    page_title="Dokii - Vérification Intelligente",
+    page_icon="📄",
+    layout="centered"
 )
 
-# CSS personnalisé pour un design moderne
+# CSS personnalisé - Dark Mode élégant
 st.markdown("""
 <style>
-    /* Fond général */
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Background principal - Bleu Nuit */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+        background: linear-gradient(135deg, #2c3e50 0%, #4A6274 50%, #34495e 100%);
+        color: #E8E8E8;
     }
     
-    /* Headers */
-    h1 {
-        color: white !important;
-        font-weight: 900 !important;
-        font-size: 3.5rem !important;
-        text-align: center;
-        margin-bottom: 1rem !important;
-        background: linear-gradient(90deg, #60a5fa, #34d399);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    /* Tous les textes en blanc/gris clair */
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
+        color: #E8E8E8 !important;
     }
     
-    h2, h3 {
-        color: white !important;
-        font-weight: 700 !important;
+    /* Titre principal "Dokii" avec police Serif */
+    .dokii-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 4.5rem;
+        font-weight: 900;
+        color: #FFFFFF !important;
+        margin: 0;
+        letter-spacing: -2px;
     }
     
-    /* Cards modernes */
-    .modern-card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 1.5rem;
-        padding: 2rem;
-        margin: 1rem 0;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    /* Police sans-serif pour le reste */
+    .stApp {
+        font-family: 'Inter', sans-serif;
     }
     
-    .white-card {
-        background: white;
-        border-radius: 1.5rem;
-        padding: 2rem;
-        margin: 1rem 0;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Boutons */
+    /* Boutons personnalisés - Beige/Crème */
     .stButton > button {
-        background: linear-gradient(135deg, #2563eb, #10b981) !important;
-        color: white !important;
-        font-weight: bold !important;
+        background-color: #E6DACE !important;
+        color: #000000 !important;
         border: none !important;
-        border-radius: 1rem !important;
-        padding: 1rem 2rem !important;
-        font-size: 1.1rem !important;
-        box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4) !important;
+        border-radius: 20px !important;
+        padding: 0.75rem 2rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
         transition: all 0.3s ease !important;
-        width: 100% !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
     }
     
     .stButton > button:hover {
+        background-color: #D4C4B8 !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 6px 30px rgba(37, 99, 235, 0.6) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
     }
     
     .stButton > button:disabled {
-        background: linear-gradient(135deg, #64748b, #94a3b8) !important;
-        cursor: not-allowed !important;
+        background-color: #7A7A7A !important;
+        color: #CCCCCC !important;
+    }
+    
+    /* Badge crédits */
+    .credit-badge {
+        background: rgba(230, 218, 206, 0.15);
+        border: 2px solid #E6DACE;
+        border-radius: 20px;
+        padding: 0.75rem 1.5rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+    
+    .credit-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #E6DACE;
+    }
+    
+    .credit-text {
+        font-size: 0.85rem;
+        color: #B8B8B8;
+        margin-top: 0.25rem;
+    }
+    
+    /* Badges de confiance */
+    .trust-badge {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 15px;
+        padding: 1.25rem 0.75rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    .trust-badge:hover {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateY(-3px);
+    }
+    
+    .trust-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .trust-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #FFFFFF;
+    }
+    
+    .trust-subtitle {
+        font-size: 0.75rem;
+        color: #B8B8B8;
+    }
+    
+    /* Conteneurs de blocs */
+    .block-container {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        backdrop-filter: blur(15px);
+    }
+    
+    .block-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #E6DACE;
+        margin-bottom: 1rem;
+    }
+    
+    /* Checkbox personnalisée */
+    .stCheckbox {
+        font-size: 1rem;
+        color: #E8E8E8;
     }
     
     /* File uploader */
     .uploadedFile {
-        background: linear-gradient(135deg, #f8fafc, #e0f2fe) !important;
-        border-radius: 1rem !important;
-        border: 2px solid #3b82f6 !important;
-        padding: 1rem !important;
+        background: rgba(230, 218, 206, 0.1) !important;
+        border: 2px solid #E6DACE !important;
+        border-radius: 15px !important;
+        color: #FFFFFF !important;
     }
     
     /* Progress bar */
     .stProgress > div > div {
-        background: linear-gradient(90deg, #2563eb, #10b981) !important;
-        border-radius: 1rem !important;
+        background-color: #E6DACE !important;
     }
     
-    /* Success/Error boxes */
-    .success-box {
-        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-        border-left: 5px solid #10b981;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        margin: 1rem 0;
+    /* Dataframes */
+    .dataframe {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 10px !important;
     }
     
-    .error-box {
-        background: linear-gradient(135deg, #fee2e2, #fecaca);
-        border-left: 5px solid #ef4444;
-        border-radius: 1rem;
-        padding: 1.5rem;
-        margin: 1rem 0;
-    }
-    
-    /* Badges */
-    .badge {
-        display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        margin: 0.25rem;
-    }
-    
-    .badge-free {
-        background: linear-gradient(135deg, #60a5fa, #34d399);
-        color: white;
-    }
-    
-    .badge-secure {
-        background: rgba(16, 185, 129, 0.2);
-        color: #10b981;
-        border: 1px solid #10b981;
-    }
-    
-    /* Text colors */
-    .text-white {
-        color: white !important;
-    }
-    
-    .text-slate {
-        color: #cbd5e1 !important;
+    /* Messages d'erreur/succès */
+    .stAlert {
+        border-radius: 15px !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
     }
     
     /* Expander */
     .streamlit-expanderHeader {
-        background: rgba(255, 255, 255, 0.1) !important;
-        border-radius: 1rem !important;
-        color: white !important;
-        font-weight: 600 !important;
+        background: rgba(230, 218, 206, 0.1) !important;
+        border-radius: 15px !important;
+        color: #FFFFFF !important;
     }
     
-    /* Info/Warning messages */
-    .stAlert {
-        border-radius: 1rem !important;
+    /* Divider */
+    hr {
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Spinner */
+    .stSpinner > div {
+        border-top-color: #E6DACE !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -164,6 +197,8 @@ if 'files_analyzed' not in st.session_state:
     st.session_state.files_analyzed = 0
 if 'current_month' not in st.session_state:
     st.session_state.current_month = datetime.now().strftime("%Y-%m")
+if 'analysis_result' not in st.session_state:
+    st.session_state.analysis_result = None
 
 # Constantes
 MONTHLY_LIMIT = 15
@@ -173,6 +208,9 @@ current_month = datetime.now().strftime("%Y-%m")
 if st.session_state.current_month != current_month:
     st.session_state.files_analyzed = 0
     st.session_state.current_month = current_month
+
+# Calculer les crédits restants
+credits_remaining = MONTHLY_LIMIT - st.session_state.files_analyzed
 
 # Fonction pour encoder un fichier en base64
 def encode_file_to_base64(uploaded_file):
@@ -185,7 +223,7 @@ def analyze_documents(files):
         api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
         
         if not api_key:
-            st.error("⚠️ Clé API Anthropic non configurée. Veuillez ajouter ANTHROPIC_API_KEY dans les secrets.")
+            st.error("⚠️ Clé API Anthropic non configurée.")
             return None
         
         client = anthropic.Anthropic(api_key=api_key)
@@ -217,7 +255,8 @@ INSTRUCTIONS IMPORTANTES :
 {
   "status": "success" ou "error",
   "errors": [],
-  "details": "description détaillée des vérifications effectuées"
+  "details": "description détaillée des vérifications effectuées",
+  "anomalies_count": 0
 }
 
 Si des erreurs sont détectées, ajoute-les dans le tableau "errors" avec le format :
@@ -247,281 +286,190 @@ Ne mets RIEN d'autre que le JSON dans ta réponse."""
         st.error(f"❌ Erreur lors de l'analyse : {str(e)}")
         return None
 
-# Interface principale
-def main():
-    remaining_files = MONTHLY_LIMIT - st.session_state.files_analyzed
-    percentage_used = (st.session_state.files_analyzed / MONTHLY_LIMIT) * 100
-    
-    # Page d'accueil avec consentement
-    if not st.session_state.consented:
-        # Header avec logo
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("<h1>🛡️ DocVerify AI</h1>", unsafe_allow_html=True)
-            st.markdown("<p class='text-slate' style='text-align: center; font-size: 1.2rem;'>Vérification Intelligente de Documents</p>", unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Badge version gratuite
-        st.markdown("""
-        <div style='text-align: center; margin: 2rem 0;'>
-            <span class='badge badge-free'>⚡ VERSION GRATUITE • 15 fichiers/mois</span>
+# ============================================
+# INTERFACE PRINCIPALE
+# ============================================
+
+# HEADER - Titre "Dokii" + Badge Crédits
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    st.markdown('<h1 class="dokii-title">Dokii.</h1>', unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div class="credit-badge">
+        <div class="credit-number">{credits_remaining}</div>
+        <div class="credit-text">Crédits restants</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# BARRE DE CONFIANCE - Les 4 badges
+trust_badges = [
+    ("🔒", "TLS", "Sécurisé"),
+    ("🛡️", "RGPD", "Conforme"),
+    ("🗑️", "Delete", "Suppression auto"),
+    ("👁️", "Privé", "Confidentiel")
+]
+
+cols = st.columns(4)
+for col, (icon, title, subtitle) in zip(cols, trust_badges):
+    with col:
+        st.markdown(f"""
+        <div class="trust-badge">
+            <div class="trust-icon">{icon}</div>
+            <div class="trust-title">{title}</div>
+            <div class="trust-subtitle">{subtitle}</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Compteur d'utilisation
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("<div class='modern-card'>", unsafe_allow_html=True)
-            st.markdown(f"<h3 style='text-align: center;'>📊 Utilisation mensuelle</h3>", unsafe_allow_html=True)
-            st.markdown(f"<p style='text-align: center; font-size: 2rem; color: {'#ef4444' if remaining_files == 0 else '#60a5fa'}; font-weight: bold;'>{st.session_state.files_analyzed} / {MONTHLY_LIMIT}</p>", unsafe_allow_html=True)
-            st.progress(percentage_used / 100)
-            if remaining_files > 0:
-                st.success(f"✅ {remaining_files} analyse{'s' if remaining_files > 1 else ''} disponible{'s' if remaining_files > 1 else ''}")
-            else:
-                st.error("⚠️ Limite atteinte • Renouvellement le 1er du mois")
-            st.markdown("</div>", unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Features
-        col1, col2, col3, col4 = st.columns(4)
-        features = [
-            ("🔒", "Chiffré", "TLS 1.3"),
-            ("🛡️", "RGPD", "Conforme UE"),
-            ("🗑️", "Éphémère", "Auto-delete"),
-            ("👁️", "Privé", "100%")
-        ]
-        
-        for col, (icon, title, desc) in zip([col1, col2, col3, col4], features):
-            with col:
-                st.markdown(f"""
-                <div class='modern-card' style='text-align: center; padding: 1.5rem;'>
-                    <div style='font-size: 2.5rem; margin-bottom: 0.5rem;'>{icon}</div>
-                    <div style='color: white; font-weight: bold; font-size: 1.1rem;'>{title}</div>
-                    <div style='color: #cbd5e1; font-size: 0.85rem;'>{desc}</div>
-                </div>
-                """, unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Carte de sécurité
-        col1, col2, col3 = st.columns([1, 3, 1])
-        with col2:
-            st.markdown("<div class='white-card'>", unsafe_allow_html=True)
-            st.markdown("<h2 style='color: #1e293b !important;'>🔐 Sécurité & Confidentialité</h2>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #64748b; font-size: 1.1rem;'>Protection maximale de vos données sensibles</p>", unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Features détaillées
-            features_detail = [
-                ("🔒", "Chiffrement total", "Protocole TLS 1.3 pour une protection maximale"),
-                ("💾", "Zéro stockage", "Aucune sauvegarde permanente, traitement en temps réel"),
-                ("🛡️", "Conformité RGPD", "Respect total des normes européennes"),
-                ("🗑️", "Suppression auto", "Effacement immédiat après analyse")
-            ]
-            
-            for icon, title, desc in features_detail:
-                st.markdown(f"""
-                <div style='display: flex; align-items: start; margin: 1.5rem 0;'>
-                    <div style='font-size: 2rem; margin-right: 1rem;'>{icon}</div>
-                    <div>
-                        <div style='color: #1e293b; font-weight: bold; font-size: 1.1rem;'>{title}</div>
-                        <div style='color: #64748b;'>{desc}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Consentement
-            st.markdown("""
-            <div style='background: linear-gradient(135deg, #dbeafe, #d1fae5); border: 2px solid #3b82f6; border-radius: 1rem; padding: 1.5rem;'>
-                <p style='color: #1e293b; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;'>
-                    ✓ J'accepte le traitement sécurisé de mes documents
-                </p>
-                <p style='color: #475569; font-size: 0.95rem;'>
-                    Traitement confidentiel conforme RGPD avec suppression automatique après analyse
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Bouton de consentement
-            if remaining_files > 0:
-                if st.button("🚀 Commencer l'analyse", key="consent_btn", use_container_width=True):
-                    st.session_state.consented = True
-                    st.rerun()
-            else:
-                st.button("⚠️ Limite mensuelle atteinte", disabled=True, use_container_width=True)
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-        
-        # Footer
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        with col2:
-            st.markdown("""
-            <div style='text-align: center;'>
-                <span class='badge' style='background: rgba(16, 185, 129, 0.2); color: #10b981;'>✓ RGPD Certifié</span>
-                <span class='badge' style='background: rgba(59, 130, 246, 0.2); color: #3b82f6;'>🔒 SSL/TLS 1.3</span>
-                <span class='badge' style='background: rgba(168, 85, 247, 0.2); color: #a855f7;'>🌍 Hébergement EU</span>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # Interface principale après consentement
-    else:
-        # Header
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("<h1 style='text-align: left; font-size: 2.5rem;'>🛡️ DocVerify AI</h1>", unsafe_allow_html=True)
-            st.markdown("<p class='text-slate' style='font-size: 1rem;'>Vérification intelligente de documents</p>", unsafe_allow_html=True)
-        with col2:
-            st.markdown("""
-            <div style='text-align: right; margin-top: 1rem;'>
-                <span class='badge badge-free'>Version Gratuite</span>
-                <span class='badge badge-secure'>🔒 Sécurisé</span>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Compteur d'utilisation
-        st.markdown("<div class='white-card'>", unsafe_allow_html=True)
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.markdown("<h3 style='color: #1e293b !important;'>📊 Utilisation mensuelle</h3>", unsafe_allow_html=True)
-            st.markdown("<p style='color: #64748b; font-size: 0.9rem;'>Renouvellement automatique chaque mois</p>", unsafe_allow_html=True)
-        with col2:
-            st.markdown(f"<p style='text-align: right; font-size: 3rem; color: {'#ef4444' if remaining_files == 0 else '#3b82f6'}; font-weight: 900; line-height: 1;'>{st.session_state.files_analyzed}</p>", unsafe_allow_html=True)
-            st.markdown(f"<p style='text-align: right; color: #64748b; font-size: 0.9rem;'>sur {MONTHLY_LIMIT}</p>", unsafe_allow_html=True)
-        
-        st.progress(percentage_used / 100)
-        
-        if remaining_files > 0:
-            st.markdown(f"""
-            <div style='display: flex; justify-content: space-between; margin-top: 1rem;'>
-                <span style='color: #10b981; font-weight: 600;'>✓ {remaining_files} analyse{'s' if remaining_files > 1 else ''} disponible{'s' if remaining_files > 1 else ''}</span>
-                <span style='color: #64748b; font-size: 0.9rem;'>{int(percentage_used)}% utilisé</span>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.error("⚠️ Limite atteinte • Renouvellement le 1er du mois")
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Upload de fichiers
-        if remaining_files > 0:
-            st.markdown("<div class='white-card'>", unsafe_allow_html=True)
-            st.markdown("<h3 style='color: #1e293b !important;'>📁 Téléchargez vos documents</h3>", unsafe_allow_html=True)
-            
-            uploaded_files = st.file_uploader(
-                "Déposez vos fichiers PDF ici",
-                type=['pdf'],
-                accept_multiple_files=True,
-                help="Formats acceptés : PDF uniquement"
-            )
-            
-            if uploaded_files:
-                st.success(f"✅ {len(uploaded_files)} fichier{'s' if len(uploaded_files) > 1 else ''} sélectionné{'s' if len(uploaded_files) > 1 else ''}")
-                
-                # Afficher les fichiers
-                for file in uploaded_files:
-                    st.markdown(f"""
-                    <div style='background: linear-gradient(135deg, #f8fafc, #e0f2fe); border: 2px solid #3b82f6; border-radius: 1rem; padding: 1rem; margin: 0.5rem 0; display: flex; align-items: center;'>
-                        <span style='font-size: 1.5rem; margin-right: 1rem;'>📄</span>
-                        <span style='color: #1e293b; font-weight: 600;'>{file.name}</span>
-                        <span style='margin-left: auto; color: #10b981;'>🔒</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            # Bouton d'analyse
-            if uploaded_files and len(uploaded_files) > 0:
-                if st.button("⚡ Lancer l'analyse IA", key="analyze_btn", use_container_width=True):
-                    if len(uploaded_files) > remaining_files:
-                        st.error(f"❌ Vous ne pouvez analyser que {remaining_files} fichier{'s' if remaining_files > 1 else ''} supplémentaire{'s' if remaining_files > 1 else ''} ce mois-ci")
-                    else:
-                        with st.spinner("🔄 Analyse en cours..."):
-                            result = analyze_documents(uploaded_files)
-                            
-                            if result:
-                                # Incrémenter le compteur
-                                st.session_state.files_analyzed += len(uploaded_files)
-                                
-                                st.markdown("<br>", unsafe_allow_html=True)
-                                
-                                # Afficher les résultats
-                                if result['status'] == 'success':
-                                    st.markdown("""
-                                    <div class='success-box'>
-                                        <div style='text-align: center;'>
-                                            <div style='font-size: 4rem; margin-bottom: 1rem;'>✅</div>
-                                            <h2 style='color: #10b981 !important; font-size: 2.5rem;'>Aucun problème détecté</h2>
-                                            <p style='color: #064e3b; font-size: 1.1rem; margin-top: 1rem;'>{}</p>
-                                        </div>
-                                    </div>
-                                    """.format(result['details']), unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f"""
-                                    <div class='error-box'>
-                                        <div style='display: flex; align-items: center; margin-bottom: 1rem;'>
-                                            <div style='font-size: 3rem; margin-right: 1rem;'>❌</div>
-                                            <div>
-                                                <h2 style='color: #ef4444 !important; margin: 0;'>Erreurs détectées</h2>
-                                                <p style='color: #7f1d1d; margin: 0;'>{len(result['errors'])} incohérence{'s' if len(result['errors']) > 1 else ''} trouvée{'s' if len(result['errors']) > 1 else ''}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    """, unsafe_allow_html=True)
-                                    
-                                    # Afficher chaque erreur
-                                    for i, err in enumerate(result['errors'], 1):
-                                        st.markdown(f"""
-                                        <div class='error-box' style='margin-top: 1rem;'>
-                                            <div style='font-weight: bold; color: #991b1b; font-size: 1.1rem; margin-bottom: 0.5rem;'>
-                                                Erreur #{i} - Type: {err.get('type', 'N/A')}
-                                            </div>
-                                            <p style='color: #7f1d1d; font-size: 1rem;'>{err.get('description', 'N/A')}</p>
-                                            {f"<p style='color: #991b1b; font-size: 0.9rem; margin-top: 0.5rem;'>📄 Documents: {err.get('document1', '')} ↔ {err.get('document2', '')}</p>" if err.get('document1') or err.get('document2') else ''}
-                                        </div>
-                                        """, unsafe_allow_html=True)
-                                    
-                                    if result.get('details'):
-                                        st.info(f"ℹ️ {result['details']}")
-                                
-                                # Message de suppression
-                                st.markdown("""
-                                <div style='background: linear-gradient(135deg, #f3e8ff, #e9d5ff); border-left: 5px solid #a855f7; border-radius: 1rem; padding: 1.5rem; margin-top: 1rem;'>
-                                    <div style='display: flex; align-items: center;'>
-                                        <span style='font-size: 1.5rem; margin-right: 1rem;'>🗑️</span>
-                                        <div>
-                                            <div style='color: #581c87; font-weight: bold;'>Données supprimées</div>
-                                            <div style='color: #6b21a8; font-size: 0.9rem;'>Vos documents ont été automatiquement supprimés après analyse</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                """, unsafe_allow_html=True)
-        
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        
-        # Footer
-        col1, col2, col3 = st.columns(3)
-        with col2:
-            st.markdown("""
-            <div style='text-align: center;'>
-                <span class='badge' style='background: white; color: #10b981; border: 1px solid #10b981;'>🛡️ RGPD</span>
-                <span class='badge' style='background: white; color: #3b82f6; border: 1px solid #3b82f6;'>🔒 SSL/TLS</span>
-                <span class='badge' style='background: white; color: #a855f7; border: 1px solid #a855f7;'>🌍 EU</span>
-            </div>
-            """, unsafe_allow_html=True)
 
-if __name__ == "__main__":
-    main()
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+# ============================================
+# BLOC 1 : CONSENTEMENT
+# ============================================
+st.markdown('<div class="block-container">', unsafe_allow_html=True)
+st.markdown('<h2 class="block-title">🔐 1. Confidentialité</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<p style='font-size: 1rem; line-height: 1.7; color: #D0D0D0;'>
+Vos documents sont <strong>chiffrés de bout en bout</strong> (TLS 1.3) et ne sont <strong>jamais stockés</strong> sur nos serveurs. 
+L'analyse est effectuée en temps réel puis les données sont <strong>automatiquement supprimées</strong>.<br><br>
+Nous sommes <strong>conformes RGPD</strong> et respectons votre vie privée.
+</p>
+""", unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Checkbox de consentement
+consent_checkbox = st.checkbox(
+    "✓ Je confirme que je ne télécharge pas de données sensibles interdites et j'accepte les CGU.",
+    key="consent"
+)
+
+st.session_state.consented = consent_checkbox
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ============================================
+# BLOC 2 : UPLOAD (visible seulement si consentement)
+# ============================================
+if st.session_state.consented:
+    st.markdown('<div class="block-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="block-title">📂 2. Importez vos documents</h2>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <p style='font-size: 0.95rem; color: #D0D0D0; margin-bottom: 1.5rem;'>
+    Téléchargez jusqu'à <strong>5 fichiers PDF</strong> (factures, bons de livraison, devis, etc.)
+    </p>
+    """, unsafe_allow_html=True)
+    
+    if credits_remaining > 0:
+        uploaded_files = st.file_uploader(
+            "Choisissez vos fichiers",
+            type=['pdf'],
+            accept_multiple_files=True,
+            help=f"Vous pouvez analyser jusqu'à {credits_remaining} fichier(s) ce mois-ci",
+            label_visibility="collapsed"
+        )
+        
+        if uploaded_files:
+            # Vérifier la limite
+            if len(uploaded_files) > 5:
+                st.warning("⚠️ Maximum 5 fichiers autorisés pour la version Basic")
+                uploaded_files = uploaded_files[:5]
+            
+            if len(uploaded_files) > credits_remaining:
+                st.error(f"❌ Vous ne pouvez analyser que {credits_remaining} fichier(s) supplémentaire(s) ce mois-ci")
+            else:
+                # Afficher les fichiers sélectionnés
+                st.markdown(f"**{len(uploaded_files)} fichier(s) sélectionné(s) :**")
+                for i, file in enumerate(uploaded_files, 1):
+                    st.markdown(f"📄 {i}. {file.name}")
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # Bouton d'analyse
+                if st.button("⚡ Lancer l'analyse", use_container_width=True):
+                    with st.spinner("🔄 Analyse en cours..."):
+                        result = analyze_documents(uploaded_files)
+                        
+                        if result:
+                            # Incrémenter le compteur
+                            st.session_state.files_analyzed += len(uploaded_files)
+                            st.session_state.analysis_result = result
+                            st.rerun()
+    else:
+        st.error("❌ Limite mensuelle atteinte (15 fichiers/mois). Réessayez le mois prochain.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+
+# ============================================
+# BLOC 3 : RÉSULTATS (visible après analyse)
+# ============================================
+if st.session_state.consented and st.session_state.analysis_result:
+    result = st.session_state.analysis_result
+    
+    st.markdown('<div class="block-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="block-title">📊 3. Rapport d\'anomalies</h2>', unsafe_allow_html=True)
+    
+    if result['status'] == 'success':
+        st.success("✅ **Aucune anomalie détectée**")
+        st.markdown(f"""
+        <p style='font-size: 1rem; color: #D0D0D0; margin-top: 1rem;'>
+        {result.get('details', 'Tous les documents sont cohérents.')}
+        </p>
+        """, unsafe_allow_html=True)
+    else:
+        st.error(f"⚠️ **{len(result['errors'])} anomalie(s) détectée(s)**")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Tableau des anomalies
+        for i, error in enumerate(result['errors'], 1):
+            with st.expander(f"🔴 Anomalie #{i} - {error.get('type', 'Erreur').capitalize()}"):
+                st.markdown(f"""
+                **Description :** {error.get('description', 'N/A')}
+                
+                **Documents concernés :**
+                - 📄 {error.get('document1', 'N/A')}
+                - 📄 {error.get('document2', 'N/A')}
+                """)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if result.get('details'):
+            st.info(f"ℹ️ {result['details']}")
+    
+    # Message de suppression automatique
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='background: rgba(168, 85, 247, 0.15); border-left: 4px solid #A855F7; border-radius: 10px; padding: 1rem; margin-top: 1.5rem;'>
+        <strong>🗑️ Données supprimées</strong><br>
+        <span style='font-size: 0.9rem; color: #D0D0D0;'>
+        Vos documents ont été automatiquement supprimés de nos serveurs après l'analyse.
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Bouton pour nouvelle analyse
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔄 Nouvelle analyse", use_container_width=True):
+        st.session_state.analysis_result = None
+        st.rerun()
+
+# Footer
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #B8B8B8; font-size: 0.85rem;'>
+    <p>Dokii - Vérification intelligente de documents • Conforme RGPD • Made with ❤️</p>
+</div>
+""", unsafe_allow_html=True)
