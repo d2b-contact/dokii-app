@@ -44,7 +44,7 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
     
-    /* Boutons personnalisés - Beige/Crème */
+    /* Boutons personnalisés - Beige/Crème avec texte NOIR */
     .stButton > button {
         background-color: #E6DACE !important;
         color: #000000 !important;
@@ -59,13 +59,31 @@ st.markdown("""
     
     .stButton > button:hover {
         background-color: #D4C4B8 !important;
+        color: #000000 !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    .stButton > button:active {
+        color: #000000 !important;
+    }
+    
+    .stButton > button:focus {
+        color: #000000 !important;
     }
     
     .stButton > button:disabled {
         background-color: #7A7A7A !important;
         color: #CCCCCC !important;
+    }
+    
+    /* Forcer la couleur du texte dans les boutons */
+    div.stButton > button > div > p {
+        color: #000000 !important;
+    }
+    
+    div.stButton > button:hover > div > p {
+        color: #000000 !important;
     }
     
     /* Badge crédits */
