@@ -273,6 +273,7 @@ INSTRUCTIONS IMPORTANTES :
 
 2. EXTRACTION DES DONNÉES :
    Pour chaque article/produit mentionné, extrais :
+   - Numéro de ligne dans le document (ligne 1, ligne 2, etc.)
    - Désignation exacte du produit
    - Quantité commandée (si présente dans bon de commande)
    - Quantité livrée (si présente dans bon de livraison)
@@ -297,7 +298,12 @@ INSTRUCTIONS IMPORTANTES :
       - Prix totaux doivent correspondre à : quantité × prix unitaire
       - Pas d'écart de prix injustifié entre les documents
 
-4. FORMAT DE RÉPONSE :
+4. RAPPORT COMPLET OBLIGATOIRE :
+   Même en cas d'erreurs, tu DOIS indiquer dans le champ "verification_positive" ce qui est correct.
+   Exemple : "Les prix unitaires et totaux sont corrects et cohérents entre les documents"
+   Le rapport doit être exhaustif : ce qui est bon ET ce qui ne l'est pas.
+
+5. FORMAT DE RÉPONSE :
    Réponds UNIQUEMENT avec un objet JSON (sans markdown, sans backticks) :
 
 {
@@ -306,6 +312,8 @@ INSTRUCTIONS IMPORTANTES :
     {
       "type": "quantité" ou "prix",
       "severity": "critique" ou "warning",
+      "ligne_document1": 3,
+      "ligne_document2": 5,
       "description": "Description précise de l'anomalie détectée",
       "article": "Nom exact du produit concerné",
       "quantite_commandee": 10,
@@ -315,13 +323,15 @@ INSTRUCTIONS IMPORTANTES :
       "document2": "Type et numéro du document 2 (ex: Bon de livraison N°456)"
     }
   ],
+  "verification_positive": "Liste des points qui sont corrects (prix, TVA, etc.)",
   "details": "Résumé global de l'analyse avec statistiques",
   "anomalies_count": 0
 }
 
-RÈGLE ABSOLUE : 
-Toute différence de quantité entre un bon de commande et un bon de livraison DOIT obligatoirement être signalée comme une erreur dans le tableau "errors". 
-Ne jamais ignorer une différence de quantité, même minime.
+RÈGLES ABSOLUES : 
+1. Toute différence de quantité entre un bon de commande et un bon de livraison DOIT obligatoirement être signalée comme une erreur dans le tableau "errors". Ne jamais ignorer une différence de quantité, même minime.
+2. Indique TOUJOURS le numéro de ligne exact (ligne_document1 et ligne_document2) pour chaque erreur afin de faciliter la vérification manuelle.
+3. Remplis TOUJOURS le champ "verification_positive" même en cas d'erreurs pour indiquer ce qui est correct.
 
 Ne mets RIEN d'autre que le JSON dans ta réponse."""
         })
@@ -486,16 +496,49 @@ if st.session_state.consented and st.session_state.analysis_result:
         {result.get('details', 'Tous les documents sont cohérents.')}
         </p>
         """, unsafe_allow_html=True)
+        
+        # Afficher les vérifications positives même en cas de succès
+        if result.get('verification_positive'):
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info(f"✓ **Points validés :** {result['verification_positive']}")
     else:
         st.error(f"⚠️ **{len(result['errors'])} anomalie(s) détectée(s)**")
         
+        # Afficher d'abord ce qui est correct
+        if result.get('verification_positive'):
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style='background: rgba(16, 185, 129, 0.15); border-left: 4px solid #10b981; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem;'>
+                <strong style='color: #10b981;'>✓ Points validés</strong><br>
+                <span style='font-size: 0.95rem; color: #D0D0D0;'>
+                {}</span>
+            </div>
+            """.format(result['verification_positive']), unsafe_allow_html=True)
+        
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Tableau des anomalies
+        # Tableau des anomalies avec numéros de ligne
         for i, error in enumerate(result['errors'], 1):
-            with st.expander(f"🔴 Anomalie #{i} - {error.get('type', 'Erreur').capitalize()}"):
+            severity_icon = "🔴" if error.get('severity') == 'critique' else "🟠"
+            
+            with st.expander(f"{severity_icon} Anomalie #{i} - {error.get('type', 'Erreur').capitalize()}"):
+                # Informations sur les lignes
+                ligne_info = ""
+                if error.get('ligne_document1'):
+                    ligne_info += f"📍 **Ligne {error.get('ligne_document1')}** dans {error.get('document1', 'Document 1')}\n\n"
+                if error.get('ligne_document2'):
+                    ligne_info += f"📍 **Ligne {error.get('ligne_document2')}** dans {error.get('document2', 'Document 2')}\n\n"
+                
                 st.markdown(f"""
+                {ligne_info}
+                **Article concerné :** {error.get('article', 'N/A')}
+                
                 **Description :** {error.get('description', 'N/A')}
+                
+                **Quantités :**
+                - Commandée : {error.get('quantite_commandee', 'N/A')}
+                - Livrée : {error.get('quantite_livree', 'N/A')}
+                - Écart : {error.get('ecart', 'N/A')}
                 
                 **Documents concernés :**
                 - 📄 {error.get('document1', 'N/A')}
