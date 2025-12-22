@@ -259,26 +259,69 @@ def analyze_documents(files):
                 }
             })
         
-        # Ajouter le prompt
+        # Ajouter le prompt amélioré
         content.append({
             "type": "text",
-            "text": """Analyse ces documents (factures d'achat, bons de livraison, etc.) et vérifie la cohérence entre eux.
+            "text": """Analyse ces documents et vérifie la cohérence entre bons de commande et bons de livraison.
 
 INSTRUCTIONS IMPORTANTES :
-1. Extrais les informations suivantes de chaque document : articles/produits, quantités, prix unitaires, prix totaux
-2. Compare ces informations entre les différents documents
-3. Vérifie que les quantités et prix correspondent entre les documents
-4. Réponds UNIQUEMENT avec un objet JSON dans ce format exact (sans markdown, sans backticks) :
+
+1. IDENTIFICATION DES DOCUMENTS :
+   - Identifie le type de chaque document (Bon de commande, Bon de livraison, Facture, Devis, etc.)
+   - Repère le numéro de référence de chaque document
+   - Note la date de chaque document
+
+2. EXTRACTION DES DONNÉES :
+   Pour chaque article/produit mentionné, extrais :
+   - Désignation exacte du produit
+   - Quantité commandée (si présente dans bon de commande)
+   - Quantité livrée (si présente dans bon de livraison)
+   - Prix unitaire HT
+   - Prix total HT
+   - TVA applicable
+
+3. VÉRIFICATIONS CRITIQUES À EFFECTUER :
+
+   A) VÉRIFICATION DES QUANTITÉS (PRIORITAIRE) :
+      Pour chaque article, compare :
+      - Quantité commandée VS Quantité livrée
+      
+      RÈGLES D'ERREURS :
+      - Si quantité livrée < quantité commandée → ERREUR "Livraison partielle"
+      - Si quantité livrée > quantité commandée → ERREUR "Sur-livraison"
+      - Si article commandé mais totalement absent de la livraison → ERREUR "Article non livré"
+      - Si quantité livrée = quantité commandée → OK
+   
+   B) VÉRIFICATION DES PRIX :
+      - Prix unitaires doivent être identiques entre commande et livraison
+      - Prix totaux doivent correspondre à : quantité × prix unitaire
+      - Pas d'écart de prix injustifié entre les documents
+
+4. FORMAT DE RÉPONSE :
+   Réponds UNIQUEMENT avec un objet JSON (sans markdown, sans backticks) :
 
 {
   "status": "success" ou "error",
-  "errors": [],
-  "details": "description détaillée des vérifications effectuées",
+  "errors": [
+    {
+      "type": "quantité" ou "prix",
+      "severity": "critique" ou "warning",
+      "description": "Description précise de l'anomalie détectée",
+      "article": "Nom exact du produit concerné",
+      "quantite_commandee": 10,
+      "quantite_livree": 7,
+      "ecart": -3,
+      "document1": "Type et numéro du document 1 (ex: Bon de commande N°123)",
+      "document2": "Type et numéro du document 2 (ex: Bon de livraison N°456)"
+    }
+  ],
+  "details": "Résumé global de l'analyse avec statistiques",
   "anomalies_count": 0
 }
 
-Si des erreurs sont détectées, ajoute-les dans le tableau "errors" avec le format :
-{"type": "quantité" ou "prix", "description": "description de l'erreur", "document1": "nom", "document2": "nom"}
+RÈGLE ABSOLUE : 
+Toute différence de quantité entre un bon de commande et un bon de livraison DOIT obligatoirement être signalée comme une erreur dans le tableau "errors". 
+Ne jamais ignorer une différence de quantité, même minime.
 
 Ne mets RIEN d'autre que le JSON dans ta réponse."""
         })
