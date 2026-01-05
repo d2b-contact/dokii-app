@@ -3,7 +3,7 @@ import anthropic
 import base64
 import json
 import os
-from fpdf import FPDF  # <--- NOUVEL AJOUT POUR LE PDF
+from fpdf import FPDF  # <--- AJOUT POUR PDF
 
 # Configuration de la page
 st.set_page_config(
@@ -141,7 +141,7 @@ st.markdown("""
         color: #E8E8E8;
     }
     
-    /* File uploader - CORRECTION LISIBILITÉ */
+    /* File uploader */
     .uploadedFile {
         background: rgba(230, 218, 206, 0.2) !important;
         border: 2px solid #E6DACE !important;
@@ -152,7 +152,7 @@ st.markdown("""
         color: #E8E8E8 !important;
     }
     
-    /* Texte dans les messages - CORRECTION LISIBILITÉ */
+    /* Texte dans les messages */
     .stMarkdown p, .stMarkdown li, .stMarkdown span {
         color: #E8E8E8 !important;
     }
@@ -168,7 +168,7 @@ st.markdown("""
         border-radius: 10px !important;
     }
     
-    /* Messages d'erreur/succès - CORRECTION LISIBILITÉ */
+    /* Messages d'erreur/succès */
     .stAlert {
         border-radius: 15px !important;
     }
@@ -206,7 +206,7 @@ st.markdown("""
         color: #FFFFFF !important;
     }
     
-    /* Expander - CORRECTION LISIBILITÉ */
+    /* Expander */
     .streamlit-expanderHeader {
         background: rgba(230, 218, 206, 0.15) !important;
         border-radius: 15px !important;
@@ -238,60 +238,43 @@ if 'analysis_result' not in st.session_state:
 
 # Fonction pour encoder un fichier en base64
 def encode_file_to_base64(uploaded_file):
+    uploaded_file.seek(0)
     return base64.b64encode(uploaded_file.read()).decode('utf-8')
 
-# --- NOUVELLE FONCTION POUR GÉNÉRER LE PDF ---
+# --- NOUVELLE FONCTION PDF ---
 def generate_pdf(report_text, errors_count):
     class PDF(FPDF):
         def header(self):
-            # Police Arial gras 15
             self.set_font('Arial', 'B', 15)
-            # Titre
             self.cell(0, 10, 'Dokii - Rapport de Verification', 0, 1, 'C')
             self.ln(5)
-
         def footer(self):
-            # Positionnement à 1.5 cm du bas
             self.set_y(-15)
-            # Police Arial italique 8
             self.set_font('Arial', 'I', 8)
-            # Numéro de page
-            self.cell(0, 10, 'Page ' + str(self.page_no()) + ' - Genere par Dokii', 0, 0, 'C')
+            self.cell(0, 10, 'Page ' + str(self.page_no()) + ' - Dokii', 0, 0, 'C')
 
     pdf = PDF()
     pdf.add_page()
     pdf.set_font("Arial", size=11)
     
-    # Titre du rapport avec statut
     statut = "COMPLET" if errors_count == 0 else f"ANOMALIES ({errors_count})"
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, f"Statut de l'analyse : {statut}", 0, 1, 'L')
+    pdf.cell(0, 10, f"Statut : {statut}", 0, 1, 'L')
     pdf.ln(5)
     
-    # Contenu du rapport
     pdf.set_font("Arial", size=10)
-    
-    # Nettoyage des caractères spéciaux non supportés par FPDF standard (emojis)
-    # Remplacement simple pour garder la lisibilité
-    replacements = {
-        "✅": "[OK]", "⚠️": "[ATTENTION]", "📦": "[COLIS]", 
-        "✓": "[V]", "❌": "[ERREUR]", "🏢": "[SOC]", "📍": ">",
-        "📊": "", "📋": "", "🗑️": ""
-    }
-    
+    # Remplacement des caractères non supportés par FPDF
+    replacements = {"✅": "[OK]", "⚠️": "[!]", "📦": "", "✓": "[V]", "❌": "[X]", "🏢": "", "📍": ">", "📊": "", "📋": "", "🗑️": ""}
     clean_text = report_text
-    for char, replacement in replacements.items():
-        clean_text = clean_text.replace(char, replacement)
-        
-    # Encodage latin-1 pour les accents français (essentiel pour FPDF)
+    for char, rep in replacements.items():
+        clean_text = clean_text.replace(char, rep)
+    
     try:
         clean_text = clean_text.encode('latin-1', 'replace').decode('latin-1')
     except:
-        # Fallback si l'encodage échoue
         pass
 
     pdf.multi_cell(0, 6, clean_text)
-    
     return pdf.output(dest='S').encode('latin-1')
 
 # Fonction pour analyser les documents avec Claude
@@ -449,9 +432,9 @@ RÈGLES ABSOLUES :
 Ne mets RIEN d'autre que le JSON dans ta réponse."""
         })
         
-        # Appel à l'API Claude
+        # Appel à l'API Claude (NOM DU MODÈLE CORRIGÉ ICI POUR ÉVITER LE CRASH)
         message = client.messages.create(
-            model="claude-sonnet-4-20250514", # NOTE: Vérifie si ce modèle est disponible pour toi, sinon utilise "claude-3-5-sonnet-20240620"
+            model="claude-3-5-sonnet-20240620",
             max_tokens=8000,
             messages=[{
                 "role": "user",
@@ -666,17 +649,8 @@ if st.session_state.consented and st.session_state.analysis_result:
         
         # --- BOUTON DE TÉLÉCHARGEMENT PDF ---
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Génération du PDF
         pdf_bytes = generate_pdf(result['details'], len(result.get('errors', [])))
-        
-        st.download_button(
-            label="📥 Télécharger le rapport (PDF)",
-            data=pdf_bytes,
-            file_name="rapport_dokii.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
+        st.download_button("📥 Télécharger le rapport (PDF)", data=pdf_bytes, file_name="rapport_dokii.pdf", mime="application/pdf", use_container_width=True)
     
     # Message de suppression automatique
     st.markdown("<br>", unsafe_allow_html=True)
