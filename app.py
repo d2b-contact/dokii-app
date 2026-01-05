@@ -256,7 +256,7 @@ def analyze_documents(files):
         
         # Appel API
         msg = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-5-sonnet-20240620",
             max_tokens=8000,
             temperature=0,
             messages=[{"role": "user", "content": content}]
