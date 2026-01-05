@@ -2,370 +2,637 @@ import streamlit as st
 import anthropic
 import base64
 import json
-import difflib
 import os
 
-# ============================================
-# 1. CONFIGURATION & STYLE (CSS NUCLÉAIRE)
-# ============================================
+# Configuration de la page
 st.set_page_config(
-    page_title="Dokii Pro",
-    page_icon="🚀",
-    layout="wide"
+    page_title="Dokii - Vérification Intelligente",
+    page_icon="📄",
+    layout="centered"
 )
 
-# CSS pour Dark Mode forcé + Lisibilité Texte
+# CSS personnalisé - Dark Mode élégant
 st.markdown("""
 <style>
+    /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
     
-    /* Fond Sombre */
+    /* Background principal - Bleu Nuit */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: #f8fafc;
+        background: linear-gradient(135deg, #2c3e50 0%, #4A6274 50%, #34495e 100%);
+        color: #E8E8E8;
+    }
+    
+    /* Tous les textes en blanc/gris clair */
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
+        color: #E8E8E8 !important;
+    }
+    
+    /* Titre principal "Dokii" avec police Serif */
+    .dokii-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 4.5rem;
+        font-weight: 900;
+        color: #FFFFFF !important;
+        margin: 0;
+        letter-spacing: -2px;
+    }
+    
+    /* Police sans-serif pour le reste */
+    .stApp {
         font-family: 'Inter', sans-serif;
     }
     
-    /* Titres et Textes */
-    h1, h2, h3, p, div, span, li, label { color: #f8fafc !important; }
-    
-    /* Titre Principal */
-    .dokii-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 4rem;
-        font-weight: 900;
-        background: linear-gradient(to right, #f8fafc, #94a3b8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-    }
-    
-    /* Badges de Confiance (Restaurés) */
-    .trust-badge {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1rem;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-    .trust-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
-    .trust-title { font-weight: bold; font-size: 0.9rem; }
-    
-    /* Bouton Action */
+    /* Boutons personnalisés - Beige/Crème avec texte NOIR */
     .stButton > button {
-        background: linear-gradient(to right, #f59e0b, #d97706) !important;
-        color: white !important;
+        background-color: #E6DACE !important;
+        color: #000000 !important;
         border: none !important;
-        font-weight: bold !important;
-        border-radius: 10px !important;
-        padding: 0.8rem 2rem !important;
-        width: 100%;
-        transition: transform 0.2s;
+        border-radius: 20px !important;
+        padding: 0.75rem 2rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
     }
+    
     .stButton > button:hover {
-        transform: scale(1.02);
+        background-color: #D4C4B8 !important;
+        color: #000000 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
     }
     
-    /* Conteneurs */
-    .block-container {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+    .stButton > button:active {
+        color: #000000 !important;
+    }
+    
+    .stButton > button:focus {
+        color: #000000 !important;
+    }
+    
+    .stButton > button:disabled {
+        background-color: #7A7A7A !important;
+        color: #CCCCCC !important;
+    }
+    
+    /* Forcer la couleur du texte dans les boutons */
+    div.stButton > button > div > p {
+        color: #000000 !important;
+    }
+    
+    div.stButton > button:hover > div > p {
+        color: #000000 !important;
+    }
+    
+    /* Badges de confiance */
+    .trust-badge {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
+        padding: 1.25rem 0.75rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
     }
     
-    /* CORRECTION LISIBILITÉ RÉSULTATS (IMPORTANT) */
-    div[data-testid="stExpanderDetails"] {
-        background-color: rgba(0, 0, 0, 0.5) !important; /* Fond sombre semi-transparent */
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #e2e8f0 !important; /* Texte clair */
-    }
-    div[data-testid="stExpanderDetails"] p,
-    div[data-testid="stExpanderDetails"] li,
-    div[data-testid="stExpanderDetails"] strong {
-        color: #e2e8f0 !important;
+    .trust-badge:hover {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateY(-3px);
     }
     
-    /* Badge Illimité */
-    .unlimited-badge {
-        background: #10b981;
-        color: white;
-        padding: 5px 12px;
+    .trust-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .trust-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #FFFFFF;
+    }
+    
+    .trust-subtitle {
+        font-size: 0.75rem;
+        color: #B8B8B8;
+    }
+    
+    /* Conteneurs de blocs */
+    .block-container {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        border: 1px solid rgba(255,255,255,0.3);
+        padding: 2rem;
+        margin: 1.5rem 0;
+        backdrop-filter: blur(15px);
+    }
+    
+    .block-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #E6DACE;
+        margin-bottom: 1rem;
+    }
+    
+    /* Checkbox personnalisée */
+    .stCheckbox {
+        font-size: 1rem;
+        color: #E8E8E8;
+    }
+    
+    /* File uploader - CORRECTION LISIBILITÉ */
+    .uploadedFile {
+        background: rgba(230, 218, 206, 0.2) !important;
+        border: 2px solid #E6DACE !important;
+        border-radius: 15px !important;
+    }
+    
+    .uploadedFile label {
+        color: #E8E8E8 !important;
+    }
+    
+    /* Texte dans les messages - CORRECTION LISIBILITÉ */
+    .stMarkdown p, .stMarkdown li, .stMarkdown span {
+        color: #E8E8E8 !important;
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div {
+        background-color: #E6DACE !important;
+    }
+    
+    /* Dataframes */
+    .dataframe {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 10px !important;
+    }
+    
+    /* Messages d'erreur/succès - CORRECTION LISIBILITÉ */
+    .stAlert {
+        border-radius: 15px !important;
+    }
+    
+    /* Success message */
+    .stSuccess {
+        background: rgba(16, 185, 129, 0.2) !important;
+        border: 1px solid #10b981 !important;
+        color: #FFFFFF !important;
+    }
+    
+    .stSuccess > div {
+        color: #FFFFFF !important;
+    }
+    
+    /* Error message */
+    .stError {
+        background: rgba(239, 68, 68, 0.2) !important;
+        border: 1px solid #ef4444 !important;
+        color: #FFFFFF !important;
+    }
+    
+    .stError > div {
+        color: #FFFFFF !important;
+    }
+    
+    /* Info message */
+    .stInfo {
+        background: rgba(59, 130, 246, 0.2) !important;
+        border: 1px solid #3b82f6 !important;
+        color: #FFFFFF !important;
+    }
+    
+    .stInfo > div {
+        color: #FFFFFF !important;
+    }
+    
+    /* Expander - CORRECTION LISIBILITÉ */
+    .streamlit-expanderHeader {
+        background: rgba(230, 218, 206, 0.15) !important;
+        border-radius: 15px !important;
+        color: #FFFFFF !important;
+    }
+    
+    .streamlit-expanderContent {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-radius: 10px !important;
+    }
+    
+    /* Divider */
+    hr {
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Spinner */
+    .stSpinner > div {
+        border-top-color: #E6DACE !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================
-# 2. SESSION STATE (Gestion de la mémoire)
-# ============================================
+# Initialisation du session state
 if 'consented' not in st.session_state:
     st.session_state.consented = False
-if 'analysis_results' not in st.session_state:
-    st.session_state.analysis_results = None
+if 'analysis_result' not in st.session_state:
+    st.session_state.analysis_result = None
 
+# Fonction pour encoder un fichier en base64
 def encode_file_to_base64(uploaded_file):
-    # On revient au début du fichier au cas où
-    uploaded_file.seek(0)
     return base64.b64encode(uploaded_file.read()).decode('utf-8')
 
-# ============================================
-# 3. MOTEUR LOGIQUE (TRI + ANALYSE)
-# ============================================
-
-def organiser_documents(docs_extraits):
-    """Trie les documents par dossier (Commande mère)"""
-    groupes = {}
-    orphelins = []
-
-    # 1. Créer les dossiers
-    for doc in docs_extraits:
-        if doc['type'] == 'commande':
-            ref = doc['reference']
-            if ref not in groupes:
-                groupes[ref] = {'commande': doc, 'livraisons': [], 'factures': []}
-
-    # 2. Rattacher les autres
-    for doc in docs_extraits:
-        if doc['type'] == 'commande': continue
-        
-        lien_trouve = False
-        ref_liee = doc.get('reference_liee')
-        
-        if ref_liee:
-            for ref_cmd in groupes.keys():
-                # Matching souple (si la ref est contenue dans l'autre)
-                if ref_cmd in ref_liee or ref_liee in ref_cmd:
-                    if doc['type'] == 'livraison': groupes[ref_cmd]['livraisons'].append(doc)
-                    elif doc['type'] == 'facture': groupes[ref_cmd]['factures'].append(doc)
-                    lien_trouve = True
-                    break
-        
-        if not lien_trouve:
-            orphelins.append(doc)
-
-    return groupes, orphelins
-
-def verifier_coherence_groupe(groupe, ref_dossier):
-    """Vérifie les quantités et génère le texte narratif"""
-    cmd = groupe.get('commande')
-    livraisons = groupe.get('livraisons', [])
-    
-    if not cmd:
-        return {"status": "warning", "titre": f"Dossier {ref_dossier} (Incomplet)", "texte": "⚠️ Bon de commande manquant."}
-    if not livraisons:
-        return {"status": "warning", "titre": f"Dossier {ref_dossier}", "texte": "ℹ️ Commande seule (Pas de BL trouvé)."}
-
-    erreurs = []
-    total_livre = {}
-    
-    # Cumul des livraisons
-    for liv in livraisons:
-        for ligne in liv['lignes']:
-            desc = ligne['description']
-            qty = float(ligne.get('quantite', 0))
-            total_livre[desc] = total_livre.get(desc, 0) + qty
-
-    items_livres_keys = list(total_livre.keys())
-    
-    # Comparaison Ligne à Ligne
-    for item_cmd in cmd['lignes']:
-        nom_cmd = item_cmd['description']
-        qty_cmd = float(item_cmd.get('quantite', 0))
-        
-        # Fuzzy Match (Important pour Pantalon vs Pantalon H.)
-        match = difflib.get_close_matches(nom_cmd, items_livres_keys, n=1, cutoff=0.60)
-        
-        qty_recue = 0
-        if match:
-            qty_recue = total_livre[match[0]]
-        
-        ecart = qty_recue - qty_cmd
-        
-        if ecart < 0:
-            erreurs.append(f"❌ **{nom_cmd}** : Commandé {qty_cmd} / Reçu {qty_recue} (**Manque {abs(ecart)}**)")
-        elif ecart > 0:
-            erreurs.append(f"⚠️ **{nom_cmd}** : Commandé {qty_cmd} / Reçu {qty_recue} (Trop perçu)")
-
-    # Rédaction Rapport
-    noms_bl = ", ".join([l['reference'] for l in livraisons])
-    if not erreurs:
-        texte = f"""
-        ### ✅ Dossier Conforme
-        **Commande {cmd['reference']}** (reçue via {noms_bl})
-        * Tous les articles ont été livrés en quantité exacte.
-        * Aucune erreur de facturation détectée.
-        """
-        status = "success"
-    else:
-        liste_err = "\n\n".join(erreurs)
-        texte = f"""
-        ### 🚨 Anomalies ({len(erreurs)})
-        **Commande {cmd['reference']}** vs **Livraisons**
-        
-        {liste_err}
-        """
-        status = "error"
-
-    return {"status": status, "titre": f"Dossier {ref_dossier}", "texte": texte}
-
+# Fonction pour analyser les documents avec Claude
 def analyze_documents(files):
     try:
-        # ---------------------------------------------------------
-        # CLÉ API (Récupérée depuis les secrets Streamlit)
-        # ---------------------------------------------------------
+        # Récupérer la clé API depuis les secrets ou variables d'environnement
         api_key = st.secrets.get("ANTHROPIC_API_KEY", os.getenv("ANTHROPIC_API_KEY"))
+        
         if not api_key:
-            st.error("⚠️ Clé API non configurée dans les Secrets.")
+            st.error("⚠️ Clé API Anthropic non configurée.")
             return None
-            
+        
         client = anthropic.Anthropic(api_key=api_key)
         
+        # Préparer les documents pour l'API
         content = []
         for file in files:
+            file_data = encode_file_to_base64(file)
             content.append({
                 "type": "document",
-                "source": { "type": "base64", "media_type": "application/pdf", "data": encode_file_to_base64(file) }
+                "source": {
+                    "type": "base64",
+                    "media_type": "application/pdf",
+                    "data": file_data
+                }
             })
-            
-        # PROMPT (Spécial "Zéro Limite" & "Piège BL")
-        prompt = """
-        Analyse ces documents.
-        1. Identifie le Type et la Référence du document.
-        2. Trouve le lien : "Reference Commande" citée sur le BL ou la Facture.
-        3. ATTENTION BL : Extrais UNIQUEMENT la colonne "LIVRÉ" (Ignore "Commandé"/"Reliquat").
         
-        JSON STRICT :
-        {
-          "documents": [
-            {
-              "type": "commande"|"livraison"|"facture",
-              "reference": "...",
-              "reference_liee": "...",
-              "lignes": [ { "description": "...", "quantite": 12.0 } ]
-            }
-          ]
-        }
-        """
-        content.append({"type": "text", "text": prompt})
+        # Ajouter le prompt amélioré
+        content.append({
+            "type": "text",
+            "text": """Analyse ces documents et vérifie la cohérence entre bons de commande, bons de livraison et factures.
+
+INSTRUCTIONS IMPORTANTES :
+
+1. IDENTIFICATION DES DOCUMENTS :
+   - Identifie le type de chaque document (Bon de commande, Bon de livraison, Facture, Devis, etc.)
+   - Repère le NUMÉRO DE COMMANDE ou NUMÉRO DE DOSSIER de chaque document
+   - Repère le NOM DU FOURNISSEUR de chaque document
+   - Note la date de chaque document
+
+2. REGROUPEMENT PAR COMMANDE :
+   - Regroupe les documents qui concernent la MÊME COMMANDE en utilisant :
+     * Le numéro de commande ou numéro de dossier
+     * ET le même fournisseur
+   - Exemple : BC-1234 (Fournisseur A) + BL-5678 (Fournisseur A) + Facture-999 (Fournisseur A) = MÊME COMMANDE
+
+3. EXTRACTION DES DONNÉES :
+   Pour chaque article/produit mentionné, extrais :
+   - Numéro de ligne dans le document (ligne 1, ligne 2, etc.)
+   - Désignation exacte du produit
+   - Quantité commandée (si présente dans bon de commande)
+   - Quantité livrée (si présente dans bon de livraison)
+   - Prix unitaire HT
+   - Prix total HT
+   - TVA applicable
+
+   RÈGLE ABSOLUE POUR LES QUANTITÉS LIVRÉES :
+   - Cherche UNIQUEMENT la colonne nommée "Livré" ou "Quantité livrée" ou "Qté livrée"
+   - IGNORE COMPLÈTEMENT les colonnes suivantes :
+     * "Reliquat" (ce qui MANQUE, pas ce qui est livré)
+     * "Reste à livrer"
+     * "En attente"
+     * "À livrer"
+     * "Différence"
+   - Seule la colonne "Livré" fait foi pour les quantités RÉELLEMENT REÇUES
+
+4. VÉRIFICATIONS CRITIQUES À EFFECTUER :
+
+   A) VÉRIFICATION DES QUANTITÉS (PRIORITAIRE) :
+      Pour chaque article d'une même commande, compare :
+      - Quantité commandée VS Quantité livrée (colonne "Livré" uniquement)
+      
+      RÈGLES D'ERREURS :
+      - Si quantité livrée < quantité commandée → ERREUR "Livraison partielle"
+      - Si quantité livrée > quantité commandée → ERREUR "Sur-livraison"
+      - Si article commandé mais totalement absent de la livraison → ERREUR "Article non livré"
+      - Si quantité livrée = quantité commandée → OK
+   
+   B) VÉRIFICATION DES PRIX :
+      - Prix unitaires doivent être identiques entre commande et livraison
+      - Prix totaux doivent correspondre à : quantité × prix unitaire
+      - Pas d'écart de prix injustifié entre les documents
+
+5. SYNTHÈSE FINALE STRUCTURÉE (champ "details") :
+   Rédige un rapport CLAIR et STRUCTURÉ en langage simple :
+
+   A) D'abord, un résumé global :
+      "Sur [X] documents analysés : [Y] commandes distinctes identifiées."
+      "[Z] commandes sans anomalie, [W] commandes avec anomalies."
+
+   B) Ensuite, pour CHAQUE COMMANDE, un paragraphe structuré :
+      
+      "📦 COMMANDE N°[XXX] - Fournisseur [Nom] :
+      Documents analysés : [Liste des docs avec leurs numéros]
+      
+      ✓ PRIX : 
+      - Montant commandé : [XXX]€ HT
+      - Montant facturé : [XXX]€ HT
+      - Résultat : [OK / Écart de XXX€]
+      
+      ⚠️ QUANTITÉS :
+      - [Nombre] articles commandés
+      - [Nombre] articles reçus
+      - Anomalies : [Description simple, ex: "78 pantalons commandés mais seulement 56 reçus (Réf: BL-1234, ligne 3)"]
+      
+      ────────────────────"
+
+   C) Utilise un langage SIMPLE :
+      - Évite le jargon technique
+      - Utilise des phrases courtes et claires
+      - Structure avec tirets, sauts de ligne, séparateurs visuels
+      - Indique toujours les références (numéro de document + ligne)
+
+6. RAPPORT COMPLET OBLIGATOIRE :
+   Même en cas d'erreurs, tu DOIS indiquer dans le champ "verification_positive" ce qui est correct.
+   Exemple : "Tous les prix unitaires et montants totaux sont corrects et cohérents"
+
+7. FORMAT DE RÉPONSE :
+   Réponds UNIQUEMENT avec un objet JSON (sans markdown, sans backticks) :
+
+{
+  "status": "success" ou "error",
+  "commandes_analysees": 3,
+  "commandes_ok": 2,
+  "commandes_erreurs": 1,
+  "errors": [
+    {
+      "type": "quantité" ou "prix",
+      "severity": "critique" ou "warning",
+      "commande_numero": "BC-1234",
+      "fournisseur": "Nom du fournisseur",
+      "ligne_document1": 3,
+      "ligne_document2": 5,
+      "description": "Description précise de l'anomalie détectée",
+      "article": "Nom exact du produit concerné",
+      "quantite_commandee": 10,
+      "quantite_livree": 7,
+      "ecart": -3,
+      "document1": "Type et numéro du document 1 (ex: Bon de commande N°123)",
+      "document2": "Type et numéro du document 2 (ex: Bon de livraison N°456)"
+    }
+  ],
+  "verification_positive": "Liste des points qui sont corrects (prix, TVA, etc.)",
+  "details": "Rapport structuré complet comme décrit ci-dessus"
+}
+
+RÈGLES ABSOLUES : 
+1. Regroupe TOUJOURS les documents par numéro de commande/dossier ET fournisseur
+2. Pour les quantités livrées, utilise UNIQUEMENT la colonne "Livré", JAMAIS le reliquat
+3. Toute différence de quantité DOIT être signalée dans "errors"
+4. Indique TOUJOURS les numéros de ligne exacts
+5. Rédige le champ "details" de manière structurée, claire et facile à lire
+6. Remplis TOUJOURS "verification_positive" même en cas d'erreurs
+
+Ne mets RIEN d'autre que le JSON dans ta réponse."""
+        })
         
-        # Appel API
-        msg = client.messages.create(
-            model="claude-3-5-sonnet-20240620",
+        # Appel à l'API Claude
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
             max_tokens=8000,
-            temperature=0,
-            messages=[{"role": "user", "content": content}]
+            messages=[{
+                "role": "user",
+                "content": content
+            }]
         )
         
-        data = json.loads(msg.content[0].text.replace("```json","").replace("```",""))
+        # Extraire et parser la réponse
+        response_text = message.content[0].text
+        clean_text = response_text.replace("```json", "").replace("```", "").strip()
+        result = json.loads(clean_text)
         
-        # Traitement Python
-        groupes, orphelins = organiser_documents(data.get('documents', []))
-        resultats = []
-        for ref, grp in groupes.items():
-            resultats.append(verifier_coherence_groupe(grp, ref))
-            
-        return resultats
-
+        return result
+        
     except Exception as e:
-        st.error(f"Erreur technique : {str(e)}")
+        st.error(f"❌ Erreur lors de l'analyse : {str(e)}")
         return None
 
 # ============================================
-# 4. INTERFACE UTILISATEUR (UI)
+# INTERFACE PRINCIPALE
 # ============================================
 
-# --- HEADER ---
-c1, c2 = st.columns([3, 1])
-with c1:
-    st.markdown('<h1 class="dokii-title">Dokii Pro.</h1>', unsafe_allow_html=True)
-with c2:
-    st.markdown('<div style="text-align:right; padding-top:20px;"><span class="unlimited-badge">⚡ ILLIMITÉ</span></div>', unsafe_allow_html=True)
-
+# HEADER - Titre "Dokii" centré
+st.markdown('<h1 class="dokii-title" style="text-align: center;">Dokii.</h1>', unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- BADGES DE CONFIANCE (Restaurés) ---
+# BARRE DE CONFIANCE - Les 4 badges
+trust_badges = [
+    ("🔒", "TLS", "Sécurisé"),
+    ("🛡️", "RGPD", "Conforme"),
+    ("🗑️", "Delete", "Suppression auto"),
+    ("👁️", "Privé", "Confidentiel")
+]
+
 cols = st.columns(4)
-badges_data = [("🔒", "TLS Chiffré"), ("🛡️", "RGPD Ready"), ("🗑️", "No Logs"), ("⚡", "Temps Réel")]
-for col, (icon, text) in zip(cols, badges_data):
+for col, (icon, title, subtitle) in zip(cols, trust_badges):
     with col:
         st.markdown(f"""
         <div class="trust-badge">
             <div class="trust-icon">{icon}</div>
-            <div class="trust-title">{text}</div>
+            <div class="trust-title">{title}</div>
+            <div class="trust-subtitle">{subtitle}</div>
         </div>
         """, unsafe_allow_html=True)
 
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+# ============================================
+# BLOC 1 : CONSENTEMENT
+# ============================================
+st.markdown('<div class="block-container">', unsafe_allow_html=True)
+st.markdown('<h2 class="block-title">🔐 1. Confidentialité</h2>', unsafe_allow_html=True)
+
+st.markdown("""
+<p style='font-size: 1rem; line-height: 1.7; color: #D0D0D0;'>
+Vos documents sont <strong>chiffrés de bout en bout</strong> (TLS 1.3) et ne sont <strong>jamais stockés</strong> sur nos serveurs. 
+L'analyse est effectuée en temps réel puis les données sont <strong>automatiquement supprimées</strong>.<br><br>
+Nous sommes <strong>conformes RGPD</strong> et respectons votre vie privée.
+</p>
+""", unsafe_allow_html=True)
+
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- BLOC 1 : CONSENTEMENT (Restauré) ---
-if not st.session_state.consented:
+# Checkbox de consentement
+consent_checkbox = st.checkbox(
+    "✓ Je confirme que je ne télécharge pas de données sensibles interdites et j'accepte les CGU.",
+    key="consent"
+)
+
+st.session_state.consented = consent_checkbox
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ============================================
+# BLOC 2 : UPLOAD (visible seulement si consentement)
+# ============================================
+if st.session_state.consented:
     st.markdown('<div class="block-container">', unsafe_allow_html=True)
-    st.markdown("### 🔐 Accès Sécurisé")
+    st.markdown('<h2 class="block-title">📂 2. Importez vos documents</h2>', unsafe_allow_html=True)
+    
     st.markdown("""
-    <p style="font-size:0.9rem; color:#cbd5e1 !important;">
-    Pour utiliser Dokii Pro, veuillez confirmer que vous acceptez les conditions d'utilisation.
-    Vos documents sont analysés en mémoire vive et supprimés immédiatement après le traitement.
+    <p style='font-size: 0.95rem; color: #D0D0D0; margin-bottom: 1.5rem;'>
+    Téléchargez vos fichiers PDF (bons de commande, bons de livraison, factures, devis, etc.)<br>
+    <strong>Aucune limite</strong> sur le nombre de documents.
     </p>
     """, unsafe_allow_html=True)
     
-    # Checkbox avec callback pour forcer le refresh
-    def valider_consentement():
-        st.session_state.consented = True
-
-    st.checkbox(
-        "Je confirme l'upload de documents professionnels et j'accepte les CGU.", 
-        on_change=valider_consentement
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- BLOC 2 : UPLOAD & ANALYSE ---
-if st.session_state.consented:
-    st.markdown('<div class="block-container">', unsafe_allow_html=True)
-    st.markdown("### 📂 Espace de Travail")
-    st.markdown("Chargez vos **Commandes** et **Bons de Livraison** (même en vrac).")
-    
     uploaded_files = st.file_uploader(
-        "Glissez vos PDF ici", 
-        type=['pdf'], 
+        "Choisissez vos fichiers",
+        type=['pdf'],
         accept_multiple_files=True,
+        help="Formats acceptés : PDF uniquement. Aucune limite de nombre.",
         label_visibility="collapsed"
     )
     
     if uploaded_files:
-        st.success(f"{len(uploaded_files)} documents prêts.")
+        # Afficher les fichiers sélectionnés
+        st.markdown(f"**{len(uploaded_files)} fichier(s) sélectionné(s) :**")
+        for i, file in enumerate(uploaded_files, 1):
+            st.markdown(f"📄 {i}. {file.name}")
         
-        # --- LE BOUTON CORRIGÉ ---
-        # On utilise un if simple, et on stocke le résultat dans session_state
-        if st.button("LANCER L'ANALYSE 🚀"):
-            with st.spinner("🧠 Dokii analyse et croise vos documents..."):
-                resultats = analyze_documents(uploaded_files)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Bouton d'analyse
+        if st.button("⚡ Lancer l'analyse", use_container_width=True):
+            with st.spinner("🔄 Analyse en cours..."):
+                result = analyze_documents(uploaded_files)
                 
-                if resultats:
-                    st.session_state.analysis_results = resultats
-                    st.rerun() # Force le rechargement pour afficher les résultats
+                if result:
+                    st.session_state.analysis_result = result
+                    st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
-
-# --- BLOC 3 : RÉSULTATS ---
-if st.session_state.analysis_results:
-    st.markdown("## 📊 Rapport d'Analyse")
     
-    for res in st.session_state.analysis_results:
-        icon = "✅" if res['status'] == 'success' else "🚨" if res['status'] == 'error' else "⚠️"
-        
-        with st.expander(f"{icon} {res['titre']}", expanded=(res['status']=='error')):
-            st.markdown(res['texte'])
-            
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔄 Nouvelle Analyse"):
-        st.session_state.analysis_results = None
+
+# ============================================
+# BLOC 3 : RÉSULTATS (visible après analyse)
+# ============================================
+if st.session_state.consented and st.session_state.analysis_result:
+    result = st.session_state.analysis_result
+    
+    st.markdown('<div class="block-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="block-title">📊 3. Rapport d\'analyse</h2>', unsafe_allow_html=True)
+    
+    # Résumé global en haut
+    if result.get('commandes_analysees'):
+        st.markdown(f"""
+        <div style='background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem;'>
+            <strong style='color: #60a5fa;'>📊 Résumé global</strong><br>
+            <span style='font-size: 0.95rem; color: #E8E8E8;'>
+            {result.get('commandes_analysees', 0)} commande(s) analysée(s) •
+            {result.get('commandes_ok', 0)} sans anomalie •
+            {result.get('commandes_erreurs', 0)} avec anomalies
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    if result['status'] == 'success':
+        st.success("✅ **Aucune anomalie détectée**")
+        
+        # Afficher les vérifications positives
+        if result.get('verification_positive'):
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info(f"✓ **Points validés :** {result['verification_positive']}")
+    else:
+        st.error(f"⚠️ **{len(result['errors'])} anomalie(s) détectée(s)**")
+        
+        # Afficher d'abord ce qui est correct
+        if result.get('verification_positive'):
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style='background: rgba(16, 185, 129, 0.15); border-left: 4px solid #10b981; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem;'>
+                <strong style='color: #10b981;'>✓ Points validés</strong><br>
+                <span style='font-size: 0.95rem; color: #E8E8E8;'>
+                {result['verification_positive']}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Tableau des anomalies avec numéros de ligne
+        for i, error in enumerate(result['errors'], 1):
+            severity_icon = "🔴" if error.get('severity') == 'critique' else "🟠"
+            
+            with st.expander(f"{severity_icon} Anomalie #{i} - {error.get('type', 'Erreur').capitalize()}", expanded=True):
+                # Informations sur la commande
+                if error.get('commande_numero'):
+                    st.markdown(f"**📦 Commande :** {error.get('commande_numero')}")
+                if error.get('fournisseur'):
+                    st.markdown(f"**🏢 Fournisseur :** {error.get('fournisseur')}")
+                
+                st.markdown("---")
+                
+                # Informations sur les lignes
+                ligne_info = ""
+                if error.get('ligne_document1'):
+                    ligne_info += f"📍 **Ligne {error.get('ligne_document1')}** dans {error.get('document1', 'Document 1')}\n\n"
+                if error.get('ligne_document2'):
+                    ligne_info += f"📍 **Ligne {error.get('ligne_document2')}** dans {error.get('document2', 'Document 2')}\n\n"
+                
+                st.markdown(ligne_info)
+                
+                st.markdown(f"**📦 Article concerné :** {error.get('article', 'N/A')}")
+                st.markdown(f"**📝 Description :** {error.get('description', 'N/A')}")
+                
+                st.markdown("---")
+                
+                # Quantités si disponibles
+                if error.get('quantite_commandee') is not None:
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Commandée", error.get('quantite_commandee', 'N/A'))
+                    with col2:
+                        st.metric("Livrée", error.get('quantite_livree', 'N/A'))
+                    with col3:
+                        ecart = error.get('ecart', 'N/A')
+                        st.metric("Écart", ecart, delta=None if ecart == 'N/A' else f"{ecart}")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Rapport détaillé structuré
+    if result.get('details'):
+        st.markdown("---")
+        st.markdown("### 📋 Rapport détaillé")
+        st.markdown(f"""
+        <div style='background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 1.5rem; white-space: pre-line; line-height: 1.8; color: #E8E8E8;'>
+        {result['details']}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Message de suppression automatique
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='background: rgba(168, 85, 247, 0.15); border-left: 4px solid #A855F7; border-radius: 10px; padding: 1rem; margin-top: 1.5rem;'>
+        <strong>🗑️ Données supprimées</strong><br>
+        <span style='font-size: 0.9rem; color: #D0D0D0;'>
+        Vos documents ont été automatiquement supprimés de nos serveurs après l'analyse.
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Bouton pour nouvelle analyse
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔄 Nouvelle analyse", use_container_width=True):
+        st.session_state.analysis_result = None
         st.rerun()
 
 # Footer
-st.markdown("<br><hr><div style='text-align:center; color:#64748b; font-size:0.8rem'>Dokii Pro • Powered by Claude 3.5 Sonnet</div>", unsafe_allow_html=True)
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center; color: #B8B8B8; font-size: 0.85rem;'>
+    <p>Dokii - Vérification intelligente de documents • Conforme RGPD • Made with ❤️</p>
+</div>
+""", unsafe_allow_html=True)
