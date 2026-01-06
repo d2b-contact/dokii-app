@@ -3,7 +3,6 @@ import anthropic
 import base64
 import json
 import os
-from fpdf import FPDF  # <--- SEUL AJOUT : Import pour le PDF
 
 # Configuration de la page
 st.set_page_config(
@@ -12,172 +11,183 @@ st.set_page_config(
     layout="centered"
 )
 
-# CSS personnalisé - Dark Mode élégant
+# CSS personnalisé - Dark Mode moderne et épuré
 st.markdown("""
 <style>
-    /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+    /* Import Google Fonts - Police moderne */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     
-    /* Background principal - Bleu Nuit */
+    /* Background principal - Noir moderne doux */
     .stApp {
-        background: linear-gradient(135deg, #2c3e50 0%, #4A6274 50%, #34495e 100%);
-        color: #E8E8E8;
+        background: #0a0a0a;
+        color: #FFFFFF;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     
-    /* Tous les textes en blanc/gris clair */
+    /* Tous les textes en blanc */
     h1, h2, h3, h4, h5, h6, p, span, div, label {
-        color: #E8E8E8 !important;
+        color: #FFFFFF !important;
     }
     
-    /* Titre principal "Dokii" avec police Serif */
+    /* Titre principal "Dokii" - Moderne et élégant */
     .dokii-title {
-        font-family: 'Playfair Display', serif;
+        font-family: 'Inter', sans-serif;
         font-size: 4.5rem;
         font-weight: 900;
         color: #FFFFFF !important;
         margin: 0;
-        letter-spacing: -2px;
+        letter-spacing: -3px;
+        background: linear-gradient(135deg, #FFFFFF 0%, #a0a0a0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
-    /* Police sans-serif pour le reste */
-    .stApp {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    /* Boutons personnalisés - Beige/Crème avec texte NOIR */
+    /* Boutons modernes - Gradient électrique */
     .stButton > button {
-        background-color: #E6DACE !important;
-        color: #000000 !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: #FFFFFF !important;
         border: none !important;
-        border-radius: 20px !important;
-        padding: 0.75rem 2rem !important;
+        border-radius: 12px !important;
+        padding: 0.875rem 2.5rem !important;
         font-weight: 600 !important;
         font-size: 1rem !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .stButton > button:hover {
-        background-color: #D4C4B8 !important;
-        color: #000000 !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6) !important;
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
     }
     
     .stButton > button:active {
-        color: #000000 !important;
-    }
-    
-    .stButton > button:focus {
-        color: #000000 !important;
+        transform: translateY(0px) !important;
     }
     
     .stButton > button:disabled {
-        background-color: #7A7A7A !important;
-        color: #CCCCCC !important;
+        background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%) !important;
+        color: #666666 !important;
+        box-shadow: none !important;
     }
     
     /* Forcer la couleur du texte dans les boutons */
     div.stButton > button > div > p {
-        color: #000000 !important;
+        color: #FFFFFF !important;
     }
     
     div.stButton > button:hover > div > p {
-        color: #000000 !important;
+        color: #FFFFFF !important;
     }
     
-    /* Badges de confiance */
+    /* Badges de confiance - Design épuré */
     .trust-badge {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 15px;
-        padding: 1.25rem 0.75rem;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 16px;
+        padding: 1.5rem 1rem;
         text-align: center;
-        backdrop-filter: blur(10px);
         transition: all 0.3s ease;
     }
     
     .trust-badge:hover {
-        background: rgba(255, 255, 255, 0.12);
-        transform: translateY(-3px);
+        background: #222222;
+        border-color: #667eea;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
     }
     
     .trust-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+        filter: grayscale(0%);
     }
     
     .trust-title {
-        font-size: 0.95rem;
-        font-weight: 600;
+        font-size: 1rem;
+        font-weight: 700;
         color: #FFFFFF;
+        letter-spacing: 0.5px;
     }
     
     .trust-subtitle {
         font-size: 0.75rem;
-        color: #B8B8B8;
+        color: #888888;
+        margin-top: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
-    /* Conteneurs de blocs */
+    /* Conteneurs de blocs - Cards modernes */
     .block-container {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: #141414;
+        border: 1px solid #2a2a2a;
         border-radius: 20px;
-        padding: 2rem;
-        margin: 1.5rem 0;
-        backdrop-filter: blur(15px);
+        padding: 2.5rem;
+        margin: 2rem 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     
     .block-title {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #E6DACE;
-        margin-bottom: 1rem;
+        font-size: 2rem;
+        font-weight: 800;
+        color: #FFFFFF;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.5px;
     }
     
-    /* Checkbox personnalisée */
+    /* Checkbox moderne */
     .stCheckbox {
         font-size: 1rem;
-        color: #E8E8E8;
+        color: #FFFFFF;
     }
     
-    /* File uploader */
+    .stCheckbox > label {
+        color: #FFFFFF !important;
+    }
+    
+    /* File uploader - Design moderne */
     .uploadedFile {
-        background: rgba(230, 218, 206, 0.2) !important;
-        border: 2px solid #E6DACE !important;
-        border-radius: 15px !important;
+        background: #1a1a1a !important;
+        border: 2px solid #2a2a2a !important;
+        border-radius: 12px !important;
+        transition: all 0.3s ease;
+    }
+    
+    .uploadedFile:hover {
+        border-color: #667eea !important;
+        background: #1f1f1f !important;
     }
     
     .uploadedFile label {
-        color: #E8E8E8 !important;
+        color: #FFFFFF !important;
     }
     
     /* Texte dans les messages */
     .stMarkdown p, .stMarkdown li, .stMarkdown span {
-        color: #E8E8E8 !important;
+        color: #FFFFFF !important;
     }
     
-    /* Progress bar */
+    /* Progress bar moderne */
     .stProgress > div > div {
-        background-color: #E6DACE !important;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+        border-radius: 10px;
     }
     
-    /* Dataframes */
-    .dataframe {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-radius: 10px !important;
-    }
-    
-    /* Messages d'erreur/succès */
+    /* Messages d'alerte - Design moderne */
     .stAlert {
-        border-radius: 15px !important;
+        border-radius: 12px !important;
+        border: none !important;
     }
     
     /* Success message */
     .stSuccess {
-        background: rgba(16, 185, 129, 0.2) !important;
-        border: 1px solid #10b981 !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: #FFFFFF !important;
+        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
     }
     
     .stSuccess > div {
@@ -186,9 +196,9 @@ st.markdown("""
     
     /* Error message */
     .stError {
-        background: rgba(239, 68, 68, 0.2) !important;
-        border: 1px solid #ef4444 !important;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
         color: #FFFFFF !important;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
     }
     
     .stError > div {
@@ -197,35 +207,130 @@ st.markdown("""
     
     /* Info message */
     .stInfo {
-        background: rgba(59, 130, 246, 0.2) !important;
-        border: 1px solid #3b82f6 !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
         color: #FFFFFF !important;
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
     }
     
     .stInfo > div {
         color: #FFFFFF !important;
     }
     
-    /* Expander */
-    .streamlit-expanderHeader {
-        background: rgba(230, 218, 206, 0.15) !important;
-        border-radius: 15px !important;
+    /* Warning message */
+    .stWarning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+    }
+    
+    .stWarning > div {
         color: #FFFFFF !important;
     }
     
+    /* Expander - Design épuré */
+    .streamlit-expanderHeader {
+        background: #1a1a1a !important;
+        border: 1px solid #2a2a2a !important;
+        border-radius: 12px !important;
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background: #222222 !important;
+        border-color: #667eea !important;
+    }
+    
     .streamlit-expanderContent {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-radius: 10px !important;
+        background: #141414 !important;
+        border: 1px solid #2a2a2a !important;
+        border-top: none !important;
+        border-radius: 0 0 12px 12px !important;
+        padding: 1.5rem !important;
     }
     
-    /* Divider */
+    /* Metrics - Design moderne */
+    .stMetric {
+        background: #1a1a1a;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid #2a2a2a;
+    }
+    
+    .stMetric > div > div {
+        color: #FFFFFF !important;
+    }
+    
+    /* Divider élégant */
     hr {
-        border-color: rgba(255, 255, 255, 0.2) !important;
+        border-color: #2a2a2a !important;
+        margin: 2rem 0 !important;
     }
     
-    /* Spinner */
+    /* Spinner moderne */
     .stSpinner > div {
-        border-top-color: #E6DACE !important;
+        border-top-color: #667eea !important;
+        border-right-color: #764ba2 !important;
+    }
+    
+    /* Scrollbar personnalisée */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #0a0a0a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #2a2a2a;
+        border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #3a3a3a;
+    }
+    
+    /* Input fields */
+    .stTextInput > div > div > input {
+        background-color: #1a1a1a !important;
+        color: #FFFFFF !important;
+        border: 1px solid #2a2a2a !important;
+        border-radius: 8px !important;
+    }
+    
+    .stTextInput > div > div > input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 1px #667eea !important;
+    }
+    
+    /* Links */
+    a {
+        color: #667eea !important;
+        text-decoration: none;
+    }
+    
+    a:hover {
+        color: #764ba2 !important;
+        text-decoration: underline;
+    }
+    
+    /* Dataframes */
+    .dataframe {
+        background: #1a1a1a !important;
+        border: 1px solid #2a2a2a !important;
+        border-radius: 12px !important;
+    }
+    
+    .dataframe th {
+        background: #222222 !important;
+        color: #FFFFFF !important;
+    }
+    
+    .dataframe td {
+        color: #FFFFFF !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -238,48 +343,7 @@ if 'analysis_result' not in st.session_state:
 
 # Fonction pour encoder un fichier en base64
 def encode_file_to_base64(uploaded_file):
-    uploaded_file.seek(0)
     return base64.b64encode(uploaded_file.read()).decode('utf-8')
-
-# --- SEUL AJOUT : FONCTION GENERATE PDF ---
-def generate_pdf(report_text, errors_count):
-    class PDF(FPDF):
-        def header(self):
-            self.set_font('Arial', 'B', 15)
-            self.cell(0, 10, 'Dokii - Rapport de Verification', 0, 1, 'C')
-            self.ln(5)
-        def footer(self):
-            self.set_y(-15)
-            self.set_font('Arial', 'I', 8)
-            self.cell(0, 10, 'Page ' + str(self.page_no()) + ' - Dokii', 0, 0, 'C')
-
-    pdf = PDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=11)
-    
-    statut = "COMPLET" if errors_count == 0 else f"ANOMALIES ({errors_count})"
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, f"Statut : {statut}", 0, 1, 'L')
-    pdf.ln(5)
-    
-    pdf.set_font("Arial", size=10)
-    
-    # Nettoyage pour PDF (emojis et caractères spéciaux)
-    replacements = {"✅": "[OK]", "⚠️": "[!]", "📦": "", "✓": "[V]", "❌": "[X]", 
-                    "🏢": "", "📍": ">", "📊": "", "📋": "", "🗑️": "", "€": " EUR", 
-                    "’": "'", "–": "-", "────────────────────": "--------------------"}
-    clean_text = report_text
-    for char, rep in replacements.items():
-        clean_text = clean_text.replace(char, rep)
-        
-    try:
-        clean_text = clean_text.encode('latin-1', 'replace').decode('latin-1')
-    except:
-        pass
-
-    pdf.multi_cell(0, 6, clean_text)
-    return pdf.output(dest='S').encode('latin-1')
-# ------------------------------------------
 
 # Fonction pour analyser les documents avec Claude
 def analyze_documents(files):
@@ -461,8 +525,13 @@ Ne mets RIEN d'autre que le JSON dans ta réponse."""
 # INTERFACE PRINCIPALE
 # ============================================
 
-# HEADER - Titre "Dokii" centré
-st.markdown('<h1 class="dokii-title" style="text-align: center;">Dokii.</h1>', unsafe_allow_html=True)
+# HEADER - Titre "Dokii" centré avec accent moderne
+st.markdown('''
+<div style="text-align: center; margin-bottom: 0.5rem;">
+    <h1 class="dokii-title">Dokii</h1>
+    <p style="color: #667eea; font-size: 0.9rem; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; margin-top: -0.5rem;">Vérification Intelligente</p>
+</div>
+''', unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
 # BARRE DE CONFIANCE - Les 4 badges
@@ -493,7 +562,7 @@ st.markdown('<div class="block-container">', unsafe_allow_html=True)
 st.markdown('<h2 class="block-title">🔐 1. Confidentialité</h2>', unsafe_allow_html=True)
 
 st.markdown("""
-<p style='font-size: 1rem; line-height: 1.7; color: #D0D0D0;'>
+<p style='font-size: 1rem; line-height: 1.7; color: #CCCCCC;'>
 Vos documents sont <strong>chiffrés de bout en bout</strong> (TLS 1.3) et ne sont <strong>jamais stockés</strong> sur nos serveurs. 
 L'analyse est effectuée en temps réel puis les données sont <strong>automatiquement supprimées</strong>.<br><br>
 Nous sommes <strong>conformes RGPD</strong> et respectons votre vie privée.
@@ -521,7 +590,7 @@ if st.session_state.consented:
     st.markdown('<h2 class="block-title">📂 2. Importez vos documents</h2>', unsafe_allow_html=True)
     
     st.markdown("""
-    <p style='font-size: 0.95rem; color: #D0D0D0; margin-bottom: 1.5rem;'>
+    <p style='font-size: 0.95rem; color: #CCCCCC; margin-bottom: 1.5rem;'>
     Téléchargez vos fichiers PDF (bons de commande, bons de livraison, factures, devis, etc.)<br>
     <strong>Aucune limite</strong> sur le nombre de documents.
     </p>
@@ -568,9 +637,9 @@ if st.session_state.consented and st.session_state.analysis_result:
     # Résumé global en haut
     if result.get('commandes_analysees'):
         st.markdown(f"""
-        <div style='background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem;'>
-            <strong style='color: #60a5fa;'>📊 Résumé global</strong><br>
-            <span style='font-size: 0.95rem; color: #E8E8E8;'>
+        <div style='background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%); border: 1px solid #667eea; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);'>
+            <strong style='color: #667eea; font-size: 1.1rem;'>📊 Résumé global</strong><br>
+            <span style='font-size: 0.95rem; color: #FFFFFF; margin-top: 0.5rem; display: block;'>
             {result.get('commandes_analysees', 0)} commande(s) analysée(s) •
             {result.get('commandes_ok', 0)} sans anomalie •
             {result.get('commandes_erreurs', 0)} avec anomalies
@@ -592,9 +661,9 @@ if st.session_state.consented and st.session_state.analysis_result:
         if result.get('verification_positive'):
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown(f"""
-            <div style='background: rgba(16, 185, 129, 0.15); border-left: 4px solid #10b981; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem;'>
-                <strong style='color: #10b981;'>✓ Points validés</strong><br>
-                <span style='font-size: 0.95rem; color: #E8E8E8;'>
+            <div style='background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);'>
+                <strong style='color: #FFFFFF; font-size: 1.1rem;'>✓ Points validés</strong><br>
+                <span style='font-size: 0.95rem; color: #FFFFFF; margin-top: 0.5rem; display: block;'>
                 {result['verification_positive']}</span>
             </div>
             """, unsafe_allow_html=True)
@@ -646,22 +715,17 @@ if st.session_state.consented and st.session_state.analysis_result:
         st.markdown("---")
         st.markdown("### 📋 Rapport détaillé")
         st.markdown(f"""
-        <div style='background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 1.5rem; white-space: pre-line; line-height: 1.8; color: #E8E8E8;'>
+        <div style='background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.5rem; white-space: pre-line; line-height: 1.8; color: #FFFFFF;'>
         {result['details']}
         </div>
         """, unsafe_allow_html=True)
-        
-        # --- SEUL AJOUT : BOUTON PDF ---
-        st.markdown("<br>", unsafe_allow_html=True)
-        pdf_bytes = generate_pdf(result['details'], len(result.get('errors', [])))
-        st.download_button("📥 Télécharger le rapport (PDF)", data=pdf_bytes, file_name="rapport_dokii.pdf", mime="application/pdf", use_container_width=True)
     
     # Message de suppression automatique
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
-    <div style='background: rgba(168, 85, 247, 0.15); border-left: 4px solid #A855F7; border-radius: 10px; padding: 1rem; margin-top: 1.5rem;'>
-        <strong>🗑️ Données supprimées</strong><br>
-        <span style='font-size: 0.9rem; color: #D0D0D0;'>
+    <div style='background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); border-radius: 12px; padding: 1.25rem; margin-top: 1.5rem; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);'>
+        <strong style='color: #FFFFFF; font-size: 1.1rem;'>🗑️ Données supprimées</strong><br>
+        <span style='font-size: 0.9rem; color: #FFFFFF; margin-top: 0.5rem; display: block;'>
         Vos documents ont été automatiquement supprimés de nos serveurs après l'analyse.
         </span>
     </div>
@@ -679,7 +743,7 @@ if st.session_state.consented and st.session_state.analysis_result:
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("---")
 st.markdown("""
-<div style='text-align: center; color: #B8B8B8; font-size: 0.85rem;'>
+<div style='text-align: center; color: #666666; font-size: 0.85rem;'>
     <p>Dokii - Vérification intelligente de documents • Conforme RGPD • Made with ❤️</p>
 </div>
 """, unsafe_allow_html=True)
