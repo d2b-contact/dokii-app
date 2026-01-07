@@ -3,6 +3,16 @@ import anthropic
 import base64
 import json
 import os
+from datetime import datetime
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # Configuration de la page
 st.set_page_config(
@@ -344,6 +354,181 @@ if 'analysis_result' not in st.session_state:
 # Fonction pour encoder un fichier en base64
 def encode_file_to_base64(uploaded_file):
     return base64.b64encode(uploaded_file.read()).decode('utf-8')
+
+# Fonction pour générer le PDF du rapport
+def generate_pdf_report(result):
+    """Génère un PDF professionnel du rapport d'analyse"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                           rightMargin=50, leftMargin=50,
+                           topMargin=50, bottomMargin=50)
+    
+    # Conteneur pour les éléments du PDF
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Style personnalisé pour le titre
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=28,
+        textColor=colors.HexColor('#000000'),
+        spaceAfter=10,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Style pour les sous-titres
+    subtitle_style = ParagraphStyle(
+        'CustomSubtitle',
+        parent=styles['Heading2'],
+        fontSize=16,
+        textColor=colors.HexColor('#333333'),
+        spaceAfter=12,
+        spaceBefore=12,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Style pour le texte normal
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#000000'),
+        spaceAfter=8,
+        alignment=TA_JUSTIFY,
+        fontName='Helvetica'
+    )
+    
+    # Style pour les anomalies
+    error_style = ParagraphStyle(
+        'ErrorStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#dc2626'),
+        spaceAfter=6,
+        fontName='Helvetica'
+    )
+    
+    # Style pour les points validés
+    success_style = ParagraphStyle(
+        'SuccessStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#059669'),
+        spaceAfter=6,
+        fontName='Helvetica'
+    )
+    
+    # En-tête du document
+    story.append(Paragraph("DOKII", title_style))
+    story.append(Paragraph("Rapport d'Analyse de Documents", subtitle_style))
+    story.append(Spacer(1, 0.2*inch))
+    
+    # Date et heure
+    date_str = datetime.now().strftime("%d/%m/%Y à %H:%M")
+    story.append(Paragraph(f"<b>Date du rapport :</b> {date_str}", normal_style))
+    story.append(Spacer(1, 0.3*inch))
+    
+    # Ligne de séparation
+    story.append(Paragraph("<hr/>", normal_style))
+    story.append(Spacer(1, 0.2*inch))
+    
+    # RÉSUMÉ GLOBAL
+    story.append(Paragraph("📊 RÉSUMÉ GLOBAL", subtitle_style))
+    
+    if result.get('commandes_analysees'):
+        resume_data = [
+            ['Commandes analysées', str(result.get('commandes_analysees', 0))],
+            ['Sans anomalie', str(result.get('commandes_ok', 0))],
+            ['Avec anomalies', str(result.get('commandes_erreurs', 0))]
+        ]
+        
+        resume_table = Table(resume_data, colWidths=[3.5*inch, 2*inch])
+        resume_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f5f5f5')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#fafafa')])
+        ]))
+        story.append(resume_table)
+        story.append(Spacer(1, 0.3*inch))
+    
+    # POINTS VALIDÉS
+    if result.get('verification_positive'):
+        story.append(Paragraph("✓ POINTS VALIDÉS", subtitle_style))
+        story.append(Paragraph(result['verification_positive'], success_style))
+        story.append(Spacer(1, 0.3*inch))
+    
+    # ANOMALIES DÉTECTÉES
+    if result.get('errors') and len(result['errors']) > 0:
+        story.append(Paragraph(f"⚠️ ANOMALIES DÉTECTÉES ({len(result['errors'])})", subtitle_style))
+        story.append(Spacer(1, 0.1*inch))
+        
+        for i, error in enumerate(result['errors'], 1):
+            # Titre de l'anomalie
+            severity = "CRITIQUE" if error.get('severity') == 'critique' else "WARNING"
+            story.append(Paragraph(f"<b>Anomalie #{i} - {error.get('type', 'Erreur').upper()} ({severity})</b>", error_style))
+            
+            # Détails de l'anomalie
+            details = []
+            
+            if error.get('commande_numero'):
+                details.append(f"<b>Commande :</b> {error['commande_numero']}")
+            if error.get('fournisseur'):
+                details.append(f"<b>Fournisseur :</b> {error['fournisseur']}")
+            if error.get('article'):
+                details.append(f"<b>Article :</b> {error['article']}")
+            if error.get('description'):
+                details.append(f"<b>Description :</b> {error['description']}")
+            
+            # Lignes des documents
+            if error.get('ligne_document1'):
+                details.append(f"<b>Ligne document 1 :</b> {error['ligne_document1']} ({error.get('document1', 'N/A')})")
+            if error.get('ligne_document2'):
+                details.append(f"<b>Ligne document 2 :</b> {error['ligne_document2']} ({error.get('document2', 'N/A')})")
+            
+            # Quantités
+            if error.get('quantite_commandee') is not None:
+                details.append(f"<b>Quantité commandée :</b> {error['quantite_commandee']}")
+            if error.get('quantite_livree') is not None:
+                details.append(f"<b>Quantité livrée :</b> {error['quantite_livree']}")
+            if error.get('ecart') is not None:
+                details.append(f"<b>Écart :</b> {error['ecart']}")
+            
+            for detail in details:
+                story.append(Paragraph(detail, normal_style))
+            
+            story.append(Spacer(1, 0.2*inch))
+            story.append(Paragraph("<hr width='80%'/>", normal_style))
+            story.append(Spacer(1, 0.2*inch))
+    
+    # RAPPORT DÉTAILLÉ
+    if result.get('details'):
+        story.append(PageBreak())
+        story.append(Paragraph("📋 RAPPORT DÉTAILLÉ", subtitle_style))
+        story.append(Spacer(1, 0.2*inch))
+        
+        # Séparer le texte en paragraphes pour une meilleure mise en page
+        details_text = result['details'].replace('\n\n', '<br/><br/>')
+        story.append(Paragraph(details_text, normal_style))
+    
+    # Footer
+    story.append(Spacer(1, 0.5*inch))
+    story.append(Paragraph("<hr/>", normal_style))
+    footer_text = f"<i>Document généré par Dokii le {date_str} - Conforme RGPD</i>"
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, 
+                                   textColor=colors.grey, alignment=TA_CENTER)
+    story.append(Paragraph(footer_text, footer_style))
+    
+    # Construire le PDF
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
 
 # Fonction pour analyser les documents avec Claude
 def analyze_documents(files):
@@ -733,11 +918,27 @@ if st.session_state.consented and st.session_state.analysis_result:
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Bouton pour nouvelle analyse
+    # Boutons d'action
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔄 Nouvelle analyse", use_container_width=True):
-        st.session_state.analysis_result = None
-        st.rerun()
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Bouton pour télécharger le PDF
+        pdf_buffer = generate_pdf_report(result)
+        st.download_button(
+            label="📄 Télécharger le rapport PDF",
+            data=pdf_buffer,
+            file_name=f"Dokii_Rapport_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+    
+    with col2:
+        # Bouton pour nouvelle analyse
+        if st.button("🔄 Nouvelle analyse", use_container_width=True):
+            st.session_state.analysis_result = None
+            st.rerun()
 
 # Footer
 st.markdown("<br><br>", unsafe_allow_html=True)
